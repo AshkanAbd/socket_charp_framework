@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
-namespace socket_sharp.Extensions
+namespace concox_socket_server.Extensions
 {
     public interface IPaginationExtension
     {

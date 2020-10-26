@@ -1,8 +1,9 @@
-using System;
 using System.IO;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using socket_sharp.Core.Routing;
 using socket_sharp.Core.Socket;
-using Microsoft.Extensions.Configuration;
 
 namespace socket_sharp.Core
 {
@@ -10,45 +11,51 @@ namespace socket_sharp.Core
     {
         private IConfigurationRoot Configuration { get; set; }
         private Router Router { get; set; }
-        private Server socketServer { get; set; }
+        private Server SocketServer { get; set; }
+        private IServiceCollection Services;
+        private DbContext DbContext;
 
         public Startup(Program program)
         {
             LoadConfig();
             SetupRouting();
             StartServer();
-            program.Configure(socketServer);
+            LoadAppConfiguration(program);
             AcceptConnections();
+        }
+
+        private void LoadAppConfiguration(Program program)
+        {
+            Services = new ServiceCollection();
+            program.ConfigureServer(SocketServer);
+            program.ConfigureServices(Services, Configuration);
+            var serviceProvider = Services.BuildServiceProvider();
+            DbContext = serviceProvider.GetService<DbContext>();
         }
 
         private void LoadConfig()
         {
-            try {
-                var builder = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json");
-                Configuration = builder.Build();
-            }
-            catch (Exception e) {
-                throw new Exception("Can't find appsettings.json in launch folder.");
-            }
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json");
+            Configuration = builder.Build();
         }
 
         private void SetupRouting()
         {
-            Router = new Router();
+            Router = new Router(DbContext);
             Routes.Routes.Register(Router);
         }
 
         private void StartServer()
         {
-            socketServer = new Server(Configuration["SocketConfig:IP"], int.Parse(Configuration["SocketConfig:Port"]),
+            SocketServer = new Server(Configuration["SocketConfig:IP"], int.Parse(Configuration["SocketConfig:Port"]),
                 Router);
         }
 
         private void AcceptConnections()
         {
-            socketServer.Accept();
+            SocketServer.Accept();
         }
     }
 }

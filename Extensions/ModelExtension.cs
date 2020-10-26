@@ -2,7 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SoftDeletes.Core;
 
-namespace socket_sharp.Extensions
+namespace concox_socket_server.Extensions
 {
     public class ModelExtension : SoftDeletes.ModelTools.ModelExtension
     {

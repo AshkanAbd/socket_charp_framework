@@ -1,8 +1,9 @@
+using socket_sharp.Core.Controller;
 using socket_sharp.Core.Socket;
 
 namespace socket_sharp.Contollers
 {
-    public class LoginController
+    public class LoginController : ControllerBase
     {
         public byte[] Login(Client client, byte[] buffer)
         {

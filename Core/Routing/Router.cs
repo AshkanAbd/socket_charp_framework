@@ -1,23 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using socket_sharp.Core.Socket;
 
 namespace socket_sharp.Core.Routing
 {
     public class Router
     {
-        public readonly Dictionary<RouteTemplate, Func<Client, byte[], byte[]>> registerRoutes;
+        public readonly Dictionary<RouteTemplate, Func<Client, byte[], object>> registerRoutes;
+        public readonly DbContext DbContext;
 
-        public Router()
+        public Router(DbContext dbContext)
         {
-            registerRoutes = new Dictionary<RouteTemplate, Func<Client, byte[], byte[]>>();
+            registerRoutes = new Dictionary<RouteTemplate, Func<Client, byte[], object>>();
+            DbContext = dbContext;
         }
 
-        public Func<Client, byte[], byte[]> GetTarget(byte[] buffer)
+        public Func<Client, byte[], object> GetTarget(byte[] buffer)
         {
-            Func<Client, byte[], byte[]> targetFunc = null;
-
             foreach (var (template, target) in registerRoutes) {
                 for (var i = 0; i < template.StartBits.Length; i++) {
                     if (buffer[i] != template.StartBits[i]) {
@@ -32,7 +33,7 @@ namespace socket_sharp.Core.Routing
                 }
 
                 for (var i = 0; i < template.ProtocolNumber.Length; i++) {
-                    if (buffer[template.StartBits.Length + template.PackagePlaceholder + i] !=
+                    if (buffer[template.StartBits.Length + template.packetLength + i] !=
                         template.ProtocolNumber[i]) {
                         goto nextTemplate;
                     }
@@ -48,23 +49,23 @@ namespace socket_sharp.Core.Routing
             return null;
         }
 
-        public RouteTemplate On(byte[] startBits, byte packagePlaceholder, byte[] protocolNumber, byte[] endBites)
+        public RouteTemplate On(byte[] startBits, byte packetLength, byte[] protocolNumber, byte[] endBites)
         {
             return new RouteTemplate {
                 StartBits = startBits,
                 ProtocolNumber = protocolNumber,
-                PackagePlaceholder = packagePlaceholder,
+                packetLength = packetLength,
                 EndBits = endBites,
                 Router = this
             };
         }
 
-        public RouteTemplate On(string template, byte packagePlaceholder)
+        public RouteTemplate On(string template, byte packetLength)
         {
             var splitTemplate = template.Split("x");
             var routeTemplate = new RouteTemplate {
                 Router = this,
-                PackagePlaceholder = packagePlaceholder,
+                packetLength = packetLength,
             };
             if (splitTemplate.Length != 3) {
                 throw new Exception($"Invalid route {template}.");

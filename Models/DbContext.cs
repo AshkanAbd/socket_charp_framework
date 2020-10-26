@@ -1,15 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using DbContext = SoftDeletes.Core.DbContext;
 
 namespace socket_sharp.Models
 {
-    public class ConcoxContext : DbContext
+    public class DbContext : SoftDeletes.Core.DbContext
     {
-        protected ConcoxContext()
+        protected DbContext()
         {
         }
 
-        public ConcoxContext(DbContextOptions<ConcoxContext> options) : base(options)
+        public DbContext(DbContextOptions<DbContext> options) : base(options)
         {
         }
 

@@ -1,12 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using socket_sharp.Core.Routing;
 
 namespace socket_sharp.Core.Socket
 {
     public class Client
     {
+        public Dictionary<string, object> DataBag { get; set; } = new Dictionary<string, object>();
         public TcpClient TcpClient { get; }
         public System.Net.Sockets.Socket ClientSocket { get; }
         public NetworkStream ClientIoStream { get; }
@@ -51,7 +54,15 @@ namespace socket_sharp.Core.Socket
                     var tmp = new byte[count];
                     Array.Copy(buffer, tmp, count);
                     OnMessageReceive.Invoke(this, tmp);
-                    _router?.GetTarget(tmp)?.Invoke(this, tmp);
+                    var response = _router?.GetTarget(tmp)?.Invoke(this, tmp);
+                    
+                    if (response is byte[] b) {
+                        SendMessage(b);
+                    }
+
+                    if (response is Task<byte[]> task) {
+                        SendMessage(task.Result);
+                    }
                 }
             }
             catch (Exception e) {
